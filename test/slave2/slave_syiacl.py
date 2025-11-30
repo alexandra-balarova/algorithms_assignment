@@ -1,9 +1,10 @@
+#!/usr/bin/env python3
 import socket
 import struct
 import numpy as np
 import os
 
-PORT = 55055       # random port between 50000-60000
+PORT = 50502     # random port between 50000-60000
 DTYPE = np.uint8   # 1-byte integers
 
 def recv_exact(conn, nbytes):
@@ -17,34 +18,41 @@ def recv_exact(conn, nbytes):
     return buf
 
 def handle_client(conn):
-    #receive header: rowsA, colsA, rowsB, colsB  (4 × int32)
+    # Receive header: rowsA, colsA, rowsB, colsB  (4 × int32)
     header = recv_exact(conn, 16)
     rowsA, colsA, rowsB, colsB = struct.unpack("!4i", header)
 
-    #receive matrix A
+    # Receive matrix A
     sizeA = rowsA * colsA
     rawA = recv_exact(conn, sizeA)
     A = np.frombuffer(rawA, dtype=DTYPE).reshape(rowsA, colsA)
 
-    #receive matrix B
+    # Receive matrix B
     sizeB = rowsB * colsB
     rawB = recv_exact(conn, sizeB)
     B = np.frombuffer(rawB, dtype=DTYPE).reshape(rowsB, colsB)
 
-    #compute block multiplication
-    C = (A.astype(np.uint32) @ B.astype(np.uint32)).astype(DTYPE)
+    # Compute block multiplication
 
-    #send back shape
+    C = np.zeros((rowsA, colsB), dtype=np.uint32)
+
+    for i in range(rowsA):
+        for j in range(colsB):
+            for k in range(colsA):
+
+                C[i, j] += int(A[i, k]) * int(B[k, j])
+
     conn.sendall(struct.pack("!2i", C.shape[0], C.shape[1]))
 
-    #send back data
+    # Send back data
     conn.sendall(C.tobytes())
 
 def main():
-    if not os.path.exists("slave_ip.txt"):
+    # Read own IP from local file
+    if not os.path.exists("../slave1/slave_ip.txt"):
         raise FileNotFoundError("slave_ip.txt is missing.")
 
-    with open("slave_ip.txt", "r") as f:
+    with open("../slave1/slave_ip.txt", "r") as f:
         my_ip = f.read().strip()
 
     print(f"[SLAVE] Starting server on {my_ip}:{PORT}")

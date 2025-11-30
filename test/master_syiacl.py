@@ -18,23 +18,23 @@ def recv_exact(conn, nbytes):
     return buf
 
 def worker_process(args):
-    ip, A_block, B, block_index = args
+    ip, port, A_block, B, block_index = args
 
     rowsA, colsA = A_block.shape
     rowsB, colsB = B.shape
 
     s = socket.socket()
-    s.connect((ip, PORT))
+    s.connect((ip, port))
 
-    # Send header
+    #send header
     header = struct.pack("!4i", rowsA, colsA, rowsB, colsB)
     s.sendall(header)
 
-    # Send matrix blocks
+    #send matrix blocks
     s.sendall(A_block.tobytes())
     s.sendall(B.tobytes())
 
-    # Receive result block
+    #receive result block
     shape_data = recv_exact(s, 8)
     r, c = struct.unpack("!2i", shape_data)
 
@@ -62,7 +62,7 @@ def main():
     print(f"[MASTER] Found {num_slaves} slaves.")
 
     #params
-    N = 2000
+    N = 500
     exp_info = f"{num_slaves}s"
 
     #matrix generation
@@ -84,11 +84,12 @@ def main():
 
     start_regular = time.time()
 
-    C = np.zeros((N, N), dtype=np.uint32)
+
+    C = np.zeros((N,N), dtype=np.uint32)
 
     for i in range(N):
-        for j in range(N):
-            for k in range(N):
+        for k in range(N):
+            for j in range(N):
                 C[i, j] += int(A[i, k]) * int(B[k, j])
 
     total_regular = time.time() - start_regular
@@ -112,7 +113,7 @@ def main():
     print(f"[MASTER] Completed in {total_block:.3f} seconds.")
 
 
-    filename = f"results_akldin_{exp_info}.txt"
+    filename = f"results_syiacl_{exp_info}.txt"
     with open(filename, "w") as f:
         f.write(f"Matrix size: {N} x {N}\n")
         f.write(f"Block MM with {num_slaves} slaves\n")
@@ -121,5 +122,6 @@ def main():
         f.write(f"Time taken: {total_regular:.3f} seconds\n")
 
     print(f"[MASTER] Result saved to {filename}")
+
 if __name__ == "__main__":
     main()
