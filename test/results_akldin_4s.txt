@@ -1,0 +1,3 @@
+Distributed MM with 4 slaves
+Matrix size: 2000 x 2000
+Time taken: 13.914 seconds
