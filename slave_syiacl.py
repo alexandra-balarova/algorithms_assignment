@@ -17,7 +17,6 @@ def recv_exact(conn, nbytes):
     return buf
 
 def handle_client(conn):
-    #receive header: rowsA, colsA, rowsB, colsB  (4 × int32)
     header = recv_exact(conn, 16)
     rowsA, colsA, rowsB, colsB = struct.unpack("!4i", header)
 
