@@ -85,7 +85,7 @@ def main():
 
     start_regular = time.time()
 
-    C_regular = np.dot(A, B)
+    C_regular = (A.astype(np.uint32) @ B.astype(np.uint32)).astype(DTYPE)
 
     total_regular = time.time() - start_regular
 
