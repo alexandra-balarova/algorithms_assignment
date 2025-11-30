@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import socket
 import struct
 import numpy as np
@@ -63,7 +62,7 @@ def main():
     print(f"[MASTER] Found {num_slaves} slaves.")
 
     #params
-    N = 2000
+    N = 200
     exp_info = f"{num_slaves}s"
 
     #matrix generation
@@ -85,7 +84,13 @@ def main():
 
     start_regular = time.time()
 
-    C_regular = np.dot(A, B)
+
+    C = np.zeros((N,N), dtype=np.uint32)
+
+    for i in range(N):
+        for j in range(N):
+            for k in range(N):
+                C[i, j] += int(A[i, k]) * int(B[k, j])
 
     total_regular = time.time() - start_regular
 

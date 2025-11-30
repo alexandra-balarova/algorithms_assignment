@@ -1,5 +1,5 @@
-Matrix size: 2000 x 2000
+Matrix size: 200 x 200
 Block MM with 4 slaves
-Time taken: 14.699 seconds
+Time taken: 0.306 seconds
 Regular MM
-Time taken: 7.157 seconds
+Time taken: 6.678 seconds

@@ -84,7 +84,12 @@ def main():
 
     start_regular = time.time()
 
-    C_regular = (A.astype(np.uint32) @ B.astype(np.uint32)).astype(DTYPE)
+    C = np.zeros((N, N), dtype=np.uint32)
+
+    for i in range(N):
+        for j in range(N):
+            for k in range(N):
+                C[i, j] += int(A[i, k]) * int(B[k, j])
 
     total_regular = time.time() - start_regular
 
