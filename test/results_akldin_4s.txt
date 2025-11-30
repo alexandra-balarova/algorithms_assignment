@@ -1,3 +1,5 @@
-Distributed MM with 4 slaves
 Matrix size: 2000 x 2000
-Time taken: 13.914 seconds
+Block MM with 4 slaves
+Time taken: 14.699 seconds
+Regular MM
+Time taken: 7.157 seconds

@@ -18,31 +18,31 @@ def recv_exact(conn, nbytes):
     return buf
 
 def handle_client(conn):
-    # Receive header: rowsA, colsA, rowsB, colsB  (4 × int32)
+    #receive header: rowsA, colsA, rowsB, colsB  (4 × int32)
     header = recv_exact(conn, 16)
     rowsA, colsA, rowsB, colsB = struct.unpack("!4i", header)
 
-    # Receive matrix A
+    #receive matrix A
     sizeA = rowsA * colsA
     rawA = recv_exact(conn, sizeA)
     A = np.frombuffer(rawA, dtype=DTYPE).reshape(rowsA, colsA)
 
-    # Receive matrix B
+    #receive matrix B
     sizeB = rowsB * colsB
     rawB = recv_exact(conn, sizeB)
     B = np.frombuffer(rawB, dtype=DTYPE).reshape(rowsB, colsB)
 
-    # Compute block multiplication
+    #compute block multiplication
     C = (A.astype(np.uint32) @ B.astype(np.uint32)).astype(DTYPE)
 
-    # Send back shape
+    #send back shape
     conn.sendall(struct.pack("!2i", C.shape[0], C.shape[1]))
 
-    # Send back data
+    #send back data
     conn.sendall(C.tobytes())
 
 def main():
-    # Read own IP from local file
+    #read own IP from local file
     if not os.path.exists("slave_ip.txt"):
         raise FileNotFoundError("slave_ip.txt is missing.")
 

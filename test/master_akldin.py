@@ -27,15 +27,15 @@ def worker_process(args):
     s = socket.socket()
     s.connect((ip, port))
 
-    # Send header
+    #send header
     header = struct.pack("!4i", rowsA, colsA, rowsB, colsB)
     s.sendall(header)
 
-    # Send matrix blocks
+    #send matrix blocks
     s.sendall(A_block.tobytes())
     s.sendall(B.tobytes())
 
-    # Receive result block
+    #receive result block
     shape_data = recv_exact(s, 8)
     r, c = struct.unpack("!2i", shape_data)
 
@@ -47,12 +47,10 @@ def worker_process(args):
 
 
 def main():
-    # Load list of slave IPs
     if not os.path.exists("master_ip.txt"):
         raise FileNotFoundError("master_ip.txt missing.")
 
     with open("master_ip.txt", "r") as f:
-        # format is "IP:PORT"
         slave_ips = []
         for line in f:
             line = line.strip()
@@ -64,15 +62,15 @@ def main():
     num_slaves = len(slave_ips)
     print(f"[MASTER] Found {num_slaves} slaves.")
 
-    # ----- Parameters -----
-    N = 2000   # Use smaller during testing; enlarge on experiment day
+    #params
+    N = 2000
     exp_info = f"{num_slaves}s"
 
-    # Generate matrices
+    #matrix generation
     A = np.random.randint(0, 256, (N, N), dtype=DTYPE)
     B = np.random.randint(0, 256, (N, N), dtype=DTYPE)
 
-    # Divide A into equal vertical blocks for each slave
+    #divide A into equal vertical blocks for each slave
     block_size = N // num_slaves
     blocks = []
 
@@ -83,30 +81,40 @@ def main():
         ip, port = slave_ips[i]
         blocks.append((ip, port, A_block, B, i))
 
-    print("[MASTER] Beginning distributed matrix multiplication...")
+    print("[MASTER] Beginning regular matrix multiplication...")
 
-    start_time = time.time()
+    start_regular = time.time()
 
-    # --- Parallel execution ---
+    C_regular = np.dot(A, B)
+
+    total_regular = time.time() - start_regular
+
+    print("[MASTER] Beginning block matrix multiplication...")
+
+    start_block = time.time()
+
+    # --- parallel execution ---
     with mp.Pool(num_slaves) as pool:
         results = pool.map(worker_process, blocks)
 
-    # Sort results by block index
+    #sort results by block index
     results.sort(key=lambda x: x[0])
 
-    # Reconstruct full matrix C
-    C = np.vstack([blk for _, blk in results])
+    #reconstruct full matrix C
+    C_block = np.vstack([block for _, block in results])
 
-    total_time = time.time() - start_time
+    total_block = time.time() - start_block
 
-    print(f"[MASTER] Completed in {total_time:.3f} seconds.")
+    print(f"[MASTER] Completed in {total_block:.3f} seconds.")
 
-    # Save results to file
+
     filename = f"results_akldin_{exp_info}.txt"
     with open(filename, "w") as f:
-        f.write(f"Distributed MM with {num_slaves} slaves\n")
         f.write(f"Matrix size: {N} x {N}\n")
-        f.write(f"Time taken: {total_time:.3f} seconds\n")
+        f.write(f"Block MM with {num_slaves} slaves\n")
+        f.write(f"Time taken: {total_block:.3f} seconds\n")
+        f.write(f"Regular MM\n")
+        f.write(f"Time taken: {total_regular:.3f} seconds\n")
 
     print(f"[MASTER] Result saved to {filename}")
 
