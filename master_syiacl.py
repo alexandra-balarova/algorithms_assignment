@@ -1,13 +1,12 @@
 import socket
 import struct
-from functools import total_ordering
 
 import numpy as np
 import time
 import multiprocessing as mp
 import os
 
-PORT = 55055
+PORT = 50501
 DTYPE = np.uint8
 
 def recv_exact(conn, nbytes):
