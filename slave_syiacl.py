@@ -3,8 +3,8 @@ import struct
 import numpy as np
 import os
 
-PORT = 55055       # random port between 50000-60000
-DTYPE = np.uint8   # 1-byte integers
+PORT = 55055
+DTYPE = np.uint8
 
 def recv_exact(conn, nbytes):
     """Receive exactly nbytes from socket."""
