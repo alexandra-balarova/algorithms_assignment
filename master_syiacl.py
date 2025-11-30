@@ -54,7 +54,9 @@ def regular_multiplication(A, B, N):
             for k in range(N):
                 C[i, j] += int(A[i, k]) * int(B[k, j])
 
+    # C = (A.astype(np.uint32) @ B.astype(np.uint32))
     return C
+
 
 def main():
     if not os.path.exists("master_ip.txt"):
