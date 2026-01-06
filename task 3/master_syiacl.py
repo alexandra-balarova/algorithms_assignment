@@ -6,7 +6,7 @@ import time
 import multiprocessing as mp
 import os
 
-PORT = 50501
+PORT = 55055
 DTYPE = np.uint8
 
 def recv_exact(conn, nbytes):
@@ -67,66 +67,110 @@ def main():
             line = line.strip()
             if not line:
                 continue
-            ip, port = line.split(":")
-            slave_ips.append((ip, int(port)))
-
-    num_slaves = len(slave_ips)
-    print(f"[MASTER] Found {num_slaves} slaves.")
+            ip= line
+            slave_ips.append(ip)
 
     #params
-    N = 500
-    exp_info = f"{num_slaves}s"
+    N = 400
 
     #matrix generation
     A = np.random.randint(0, 256, (N, N), dtype=DTYPE)
     B = np.random.randint(0, 256, (N, N), dtype=DTYPE)
 
     #divide A into equal vertical blocks for each slave
-    block_size = N // num_slaves
-    blocks = []
+    
 
-    for i in range(num_slaves):
-        start = i * block_size
-        end = N if i == num_slaves-1 else (i+1)*block_size
-        A_block = A[start:end, :]
-        ip, port = slave_ips[i]
-        blocks.append((ip, port, A_block, B, i))
-
-
-    print("[MASTER] Beginning regular matrix multiplication...")
-
-    start_regular = time.time()
-
-    C_regular = regular_multiplication(A, B, N)
-
-    total_regular = time.time() - start_regular
-
-
-    print("[MASTER] Beginning block matrix multiplication...")
-
-    start_block = time.time()
-
-    # --- parallel execution ---
-    with mp.Pool(num_slaves) as pool:
-        results = pool.map(block_mulptiplication, blocks)
-
-    #sort results by block index
-    results.sort(key=lambda x: x[0])
-    #reconstruct full matrix C
-    C_block = np.vstack([block for _, block in results])
-
-    total_block = time.time() - start_block
-
-    print(f"[MASTER] Completed in {total_block:.3f} seconds.")
+    #1 slave
+    block_size_1 = N
+    blocks_1 = []
+    for i in range(1):
+        start = i * block_size_1
+        end = N if i == 1-1 else (i+1)*block_size_1
+        A_block_1 = A[start:end, :]
+        ip = slave_ips[i]
+        blocks_1.append((ip, A_block_1, B, i))
+        
+    #3 slaves
+    block_size_3 = N // 3
+    blocks_3 = []
+    for i in range(3):
+        start = i * block_size_3
+        end = N if i == 3-1 else (i+1)*block_size_3
+        A_block_3 = A[start:end, :]
+        ip = slave_ips[i]
+        blocks_3.append((ip, A_block_3, B, i))
 
 
-    filename = f"results_syiacl_{exp_info}.txt"
+    #6 slaves
+    block_size_6 = N // 6
+    blocks_6 = []
+    for i in range(6):
+        start = i * block_size_6
+        end = N if i == 6-1 else (i+1)*block_size_6
+        A_block_6 = A[start:end, :]
+        ip = slave_ips[i]
+        blocks_6.append((ip, A_block_6, B, i))
+        
+    #9 slaves
+    block_size_9 = N // 9
+    blocks_9 = []
+    for i in range(9):
+        start = i * block_size_9
+        end = N if i == 9-1 else (i+1)*block_size_9
+        A_block_9 = A[start:end, :]
+        ip = slave_ips[i]
+        blocks_9.append((ip, A_block_9, B, i))
+
+    print(F"[MASTER] Beginning matrix multiplication with 1 slave...{N}")
+    
+    start_block_1 = time.time()
+    with mp.Pool(1) as pool:
+        results_1 = pool.map(block_mulptiplication, blocks_1)
+        
+    total_block_1 = time.time() - start_block_1
+    
+
+    print("[MASTER] Beginning matrix multiplication with 3 slaves...")
+        
+    start_block_3 = time.time()
+    with mp.Pool(3) as pool:
+        results_3 = pool.map(block_mulptiplication, blocks_3)
+        
+    total_block_3 = time.time() - start_block_3
+    
+
+    print("[MASTER] Beginning matrix multiplication with 6 slaves...")
+        
+    start_block_6 = time.time()
+    with mp.Pool(6) as pool:
+        results_6 = pool.map(block_mulptiplication, blocks_6)
+        
+    total_block_6 = time.time() - start_block_6
+    
+
+    print("[MASTER] Beginning matrix multiplication with 9 slaves...")
+    
+    start_block_9 = time.time()
+    with mp.Pool(9) as pool:
+        results_9 = pool.map(block_mulptiplication, blocks_9)
+        
+    total_block_9 = time.time() - start_block_9
+    
+    
+    
+    filename = f"results_syiacl400.txt"
     with open(filename, "w") as f:
         f.write(f"Matrix size: {N} x {N}\n")
-        f.write(f"Block MM with {num_slaves} slaves\n")
-        f.write(f"Time taken: {total_block:.3f} seconds\n")
-        f.write(f"Regular MM\n")
-        f.write(f"Time taken: {total_regular:.3f} seconds\n")
+        f.write(f"Block MM with {1} slaves\n")
+        f.write(f"Time taken: {total_block_1:.3f} seconds\n")
+        f.write(f"Block MM with {3} slaves\n")
+        f.write(f"Time taken: {total_block_3:.3f} seconds\n")
+        f.write(f"Block MM with {6} slaves\n")
+        f.write(f"Time taken: {total_block_6:.3f} seconds\n")
+        f.write(f"Block MM with {9} slaves\n")
+        f.write(f"Time taken: {total_block_9:.3f} seconds\n")
+
+
 
     print(f"[MASTER] Result saved to {filename}")
 if __name__ == "__main__":
