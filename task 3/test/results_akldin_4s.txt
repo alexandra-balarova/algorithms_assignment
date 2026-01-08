@@ -1,5 +1,0 @@
-Matrix size: 500 x 500
-Block MM with 4 slaves
-Time taken: 0.388 seconds
-Regular MM
-Time taken: 76.614 seconds
